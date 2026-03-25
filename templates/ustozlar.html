@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ustozlar - Milliy Messenjer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar">
+        <div class="profile-section">
+            <h3>{{ ism }}</h3>
+            <span class="role-badge">{{ rol }}</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/chat" style="text-decoration:none; color:inherit; display:block;">💬 Barcha chatlar</a></li>
+            <li style="background-color: #f0f2f5;"><a href="/ustozlar" style="text-decoration:none; color:inherit; display:block;">👨‍🏫 Ustozlar tarmog'i</a></li>
+            <li>📝 Guruhlar va Testlar</li>
+            <li><a href="/chiqish" style="text-decoration:none; color:red; display:block;">🚪 Chiqish</a></li>
+        </ul>
+    </div>
+
+    <div class="chat-area" style="background-color: #f0f2f5;">
+        <div class="chat-header">
+            <h2>Tizimdagi Mentorlar</h2>
+            <p style="color: #666; font-size: 14px; margin-top: 5px;">Yordam kerak bo'lsa, mutaxassislar bilan bog'laning</p>
+        </div>
+        
+        <div class="chat-messages" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 25px; align-items: flex-start; align-content: flex-start;">
+            
+            {% for ustoz in ustozlar %}
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); width: 260px; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 10px;">👨‍🏫</div>
+                <h3 style="color: #333; margin-bottom: 5px;">{{ ustoz[0] }}</h3>
+                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Aloqa: <b>{{ ustoz[1] }}</b></p>
+                <a href="/shaxsiy/{{ ustoz[0] }}" class="btn" style="display: block; text-decoration: none; box-sizing: border-box; padding: 10px; font-size: 14px; width: 100%;">Bog'lanish</a>
+            </div>
+            {% else %}
+            <div style="width: 100%; text-align: center; color: #888; margin-top: 50px;">
+                <h3>Hozircha tizimda ustozlar mavjud emas.</h3>
+                <p>Birinchi bo'lib ro'yxatdan o'ting!</p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+</body>
+</html>

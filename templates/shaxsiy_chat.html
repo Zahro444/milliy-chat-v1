@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ suhbatdosh }} bilan chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar">
+        <div class="profile-section">
+            <h3>{{ ism }}</h3>
+            <span class="role-badge">{{ rol }}</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/chat" style="text-decoration:none; color:inherit; display:block;">💬 Barcha chatlar</a></li>
+            <li><a href="/ustozlar" style="text-decoration:none; color:inherit; display:block;">👨‍🏫 Ustozlar tarmog'i</a></li>
+            <li>📝 Guruhlar va Testlar</li>
+            <li><a href="/chiqish" style="text-decoration:none; color:red; display:block;">🚪 Chiqish</a></li>
+        </ul>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-header">
+            <h2>💬 {{ suhbatdosh }} (Shaxsiy Chat)</h2>
+        </div>
+        
+        <div class="chat-messages">
+            <div class="message system-message">Ushbu chat mutlaqo maxfiy va xavfsiz.</div>
+            
+            {% for x in xabarlar %}
+                <div class="message {% if x[0] == ism %}user-message{% else %}other-message{% endif %}">
+                    {{ x[1] }}
+                    <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.7;">{{ x[2] }}</div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="chat-input-area">
+            <input type="text" placeholder="Xabar yozing...">
+            <button class="btn send-btn">Yuborish</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const xabarKiritish = document.querySelector('.chat-input-area input');
+        const yuborishTugmasi = document.querySelector('.send-btn');
+        const chatOynasi = document.querySelector('.chat-messages');
+        
+        const joriyIsm = "{{ ism }}";
+        const suhbatdoshIsmi = "{{ suhbatdosh }}";
+
+        const socket = io();
+        chatOynasi.scrollTop = chatOynasi.scrollHeight;
+
+        // Xonaga kirganimizni serverga aytamiz
+        socket.emit('shaxsiy_xonaga_kirish', { mening_ismim: joriyIsm, suhbatdosh: suhbatdoshIsmi });
+
+        function xabarYuborish() {
+            const matn = xabarKiritish.value.trim();
+            if (matn !== '') {
+                const hozir = new Date();
+                const vaqt = hozir.getHours().toString().padStart(2, '0') + ':' + hozir.getMinutes().toString().padStart(2, '0');
+
+                // Xabarni shaxsiy xonaga yuboramiz
+                socket.emit('yangi_shaxsiy_xabar', { 
+                    yuboruvchi: joriyIsm, 
+                    qabul_qiluvchi: suhbatdoshIsmi, 
+                    matn: matn, 
+                    vaqt: vaqt 
+                });
+                xabarKiritish.value = '';
+            }
+        }
+
+        socket.on('shaxsiy_xabar_tarqatish', function(data) {
+            const yangiXabar = document.createElement('div');
+            
+            if (data.yuboruvchi === joriyIsm) {
+                yangiXabar.classList.add('message', 'user-message');
+            } else {
+                yangiXabar.classList.add('message', 'other-message');
+            }
+            
+            yangiXabar.innerHTML = `${data.matn}
+                                    <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.7;">${data.vaqt}</div>`;
+            
+            chatOynasi.appendChild(yangiXabar);
+            chatOynasi.scrollTop = chatOynasi.scrollHeight;
+        });
+
+        yuborishTugmasi.addEventListener('click', xabarYuborish);
+        xabarKiritish.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') xabarYuborish();
+        });
+    </script>
+</body>
+</html>

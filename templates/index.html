@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milliy Messenjer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-container">
+            <h2>Xush kelibsiz!</h2>
+            <p>Milliy messenjerga ro'yxatdan o'ting</p>
+
+            <form action="/" method="POST">
+                <div class="input-group">
+                    <input type="text" name="ism" placeholder="Ism va Familiya" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" name="raqam" placeholder="Telefon raqam (+998...)" required>
+                </div>
+
+                <div class="role-selection">
+                    <label>Siz kimsiz?</label>
+                    <div class="roles">
+                        <label><input type="radio" name="role" value="shogird" checked> Shogird (O'rganuvchi)</label>
+                        <label><input type="radio" name="role" value="ustoz"> Ustoz (Mentor)</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" name="parol" placeholder="Parol o'ylab toping" required>
+                </div>
+
+                <button type="submit" class="btn">Kirish</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
