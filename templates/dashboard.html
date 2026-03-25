@@ -3,92 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asosiy oyna - Milliy Messenjer</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Milliy Chat | Asosiy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        /* CHAT DIZAYNI */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { display: flex; height: 100vh; background-color: #f0f2f5; }
+
+        /* Sidebar */
+        .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 25px 20px; background: #0088cc; color: white; font-size: 1.3rem; font-weight: bold; }
+        .menu-item { padding: 15px 20px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: 0.3s; color: #555; }
+        .menu-item:hover { background: #e7f3ff; color: #0088cc; }
+        .menu-item.active { background: #e7f3ff; color: #0088cc; font-weight: bold; border-left: 4px solid #0088cc; }
+
+        /* Chat Window */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background-color: #e5ddd5; 
+                     background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png"); }
+        
+        .chat-header { padding: 15px 25px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+        
+        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 10px; }
+
+        /* Xabarlar */
+        .msg { max-width: 65%; padding: 10px 15px; border-radius: 15px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .sent { align-self: flex-end; background: #efffde; border-bottom-right-radius: 2px; }
+        .received { align-self: flex-start; background: white; border-bottom-left-radius: 2px; }
+        
+        .msg-user { font-weight: bold; font-size: 12px; margin-bottom: 3px; display: block; color: #0088cc; }
+        .msg-time { font-size: 10px; color: #999; text-align: right; display: block; margin-top: 5px; }
+
+        /* Input qismi */
+        .input-box { padding: 15px 25px; background: #f0f2f5; display: flex; gap: 12px; align-items: center; }
+        input { flex: 1; padding: 12px 20px; border-radius: 25px; border: none; outline: none; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        button { background: #0088cc; color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #0077b3; transform: scale(1.05); }
+    </style>
 </head>
-<body class="dashboard-body">
+<body>
 
     <div class="sidebar">
-        <div class="profile-section">
-            <h3>{{ ism }}</h3>
-            <span class="role-badge">{{ rol }}</span>
-        </div>
-        <ul class="nav-links">
-            <li style="background-color: #f0f2f5;"><a href="/chat" style="text-decoration:none; color:inherit; display:block;">💬 Barcha chatlar</a></li>
-            <li><a href="/ustozlar" style="text-decoration:none; color:inherit; display:block;">👨‍🏫 Ustozlar tarmog'i</a></li>
-            <li>📝 Guruhlar va Testlar</li>
-            <li><a href="/chiqish" style="text-decoration:none; color:red; display:block;">🚪 Chiqish</a></li>
-        </ul>
+        <div class="sidebar-header">Milliy Chat</div>
+        <div class="menu-item active">👥 Guruh chati</div>
+        <div class="menu-item">📚 Ustozlar tarmog'i</div>
+        <div class="menu-item">📝 Testlar</div>
+        <div class="menu-item" style="color: #e91e63; margin-top: auto;">🚪 Chiqish</div>
     </div>
 
     <div class="chat-area">
         <div class="chat-header">
-            <h2>Guruh chati</h2>
+            <span>Guruh chati</span>
+            <span style="color: #4caf50; font-size: 12px;">● Online</span>
         </div>
-        
-        <div class="chat-messages">
-            <div class="message system-message">Chatga xush kelibsiz!</div>
-            
-            {% for x in xabarlar %}
-                <div class="message {% if x[0] == ism %}user-message{% else %}other-message{% endif %}">
-                    <small><b>{{ x[0] }} ({{ x[1] }})</b></small><br>
-                    {{ x[2] }}
-                    <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.7;">{{ x[3] }}</div>
-                </div>
-            {% endfor %}
-        </div>
-        
-        <div class="chat-input-area">
-            <input type="text" placeholder="Xabar yozing...">
-            <button class="btn send-btn">Yuborish</button>
+
+        <div id="messages">
+            </div>
+
+        <div class="input-box">
+            <input type="text" id="msg_input" placeholder="Xabar yozing..." autocomplete="off">
+            <button id="send_btn">Yuborish</button>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-
     <script>
-        const xabarKiritish = document.querySelector('.chat-input-area input');
-        const yuborishTugmasi = document.querySelector('.send-btn');
-        const chatOynasi = document.querySelector('.chat-messages');
-        const joriyIsm = "{{ ism }}";
-        const joriyRol = "{{ rol }}";
+        var socket = io();
+        var msgInput = document.getElementById('msg_input');
+        var sendBtn = document.getElementById('send_btn');
+        var messagesDiv = document.getElementById('messages');
+        
+        // Ismni serverdan session orqali olamiz
+        var username = "{{ session.get('username', 'Zahro') }}";
 
-        const socket = io();
-        chatOynasi.scrollTop = chatOynasi.scrollHeight;
-
-        function xabarYuborish() {
-            const matn = xabarKiritish.value.trim();
-            if (matn !== '') {
-                // YANGI: Kompyuterdan joriy vaqtni (soat va minut) olamiz
-                const hozir = new Date();
-                const vaqt = hozir.getHours().toString().padStart(2, '0') + ':' + hozir.getMinutes().toString().padStart(2, '0');
-
-                socket.emit('yangi_xabar', { ism: joriyIsm, rol: joriyRol, matn: matn, vaqt: vaqt });
-                xabarKiritish.value = '';
+        sendBtn.onclick = function() {
+            if (msgInput.value.trim() !== "") {
+                socket.emit('message', {
+                    'username': username,
+                    'msg': msgInput.value,
+                    'time': new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                msgInput.value = "";
             }
-        }
+        };
 
-        socket.on('xabar_tarqatish', function(data) {
-            const yangiXabar = document.createElement('div');
+        socket.on('message', function(data) {
+            var div = document.createElement('div');
+            var isMe = data.username === username;
+            div.className = 'msg ' + (isMe ? 'sent' : 'received');
             
-            if (data.ism === joriyIsm) {
-                yangiXabar.classList.add('message', 'user-message');
-            } else {
-                yangiXabar.classList.add('message', 'other-message');
-            }
-            
-            // Xabarning eng pastiga chiroyli qilib vaqtni joylashtiramiz
-            yangiXabar.innerHTML = `<small><b>${data.ism} (${data.rol})</b></small><br>${data.matn}
-                                    <div style="text-align: right; font-size: 11px; margin-top: 5px; opacity: 0.7;">${data.vaqt}</div>`;
-            
-            chatOynasi.appendChild(yangiXabar);
-            chatOynasi.scrollTop = chatOynasi.scrollHeight;
+            div.innerHTML = `
+                <span class="msg-user">${isMe ? 'Siz' : data.username}</span>
+                ${data.msg}
+                <span class="msg-time">${data.time}</span>
+            `;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
 
-        yuborishTugmasi.addEventListener('click', xabarYuborish);
-        xabarKiritish.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') xabarYuborish();
-        });
+        msgInput.addEventListener("keypress", function(e) { if (e.key === "Enter") sendBtn.click(); });
     </script>
 </body>
 </html>
