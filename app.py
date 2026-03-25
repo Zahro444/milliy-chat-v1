@@ -68,6 +68,9 @@ def ustozlar_sahifasi():
 # ==========================================
 # YANGI: SHAXSIY CHAT SAHIFASI
 # ==========================================
+@app.route('/')
+def index():
+    return render_template('index.html')
 @app.route('/shaxsiy/<ustoz_ismi>')
 def shaxsiy_chat(ustoz_ismi):
     if 'ism' not in session:
